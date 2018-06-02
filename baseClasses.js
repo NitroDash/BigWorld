@@ -218,12 +218,30 @@ class PolyCover {
     }
 }
 
+class ChunkCover {
+    constructor(x,y,fill) {
+        this.boundBox=new BoundBox(x,y,1000,1000);
+        this.fill=fill;
+    }
+    
+    translate(x,y) {
+        this.boundBox.translate(x,y);
+    }
+    
+    render(ctx,screen) {
+        if (!this.boundBox.intersectsRect(screen)) {return;}
+        ctx.fillStyle=this.fill;
+        ctx.fillRect(this.boundBox.x,this.boundBox.y,1000,1000);
+    }
+}
+
 var defaultResp={"groundCover":[{"type":"circle","x":500,"y":500,"r":500,"fill":"#0ff"}]};
 
 class Chunk {
     constructor(obj) {
         this.walls=[];
         this.groundCover=[];
+        this.enemies=[];
         if (!obj) {obj=defaultResp;}
         if (obj.walls) {
             for (var i=0; i<obj.walls.length; i++) {
@@ -237,6 +255,9 @@ class Chunk {
                 }
             }
         }
+        if (obj.bgFill) {
+            this.groundCover.push(new ChunkCover(0,0,obj.bgFill));
+        }
         if (obj.groundCover) {
             for (var i=0; i<obj.groundCover.length; i++) {
                 switch(obj.groundCover[i].type) {
@@ -249,5 +270,19 @@ class Chunk {
                 }
             }
         }
+        if (obj.enemies) {
+            for (var i=0; i<obj.enemies.length; i++) {
+                switch(obj.enemies[i].type) {
+                    case "test":
+                        this.enemies.push(new TestEnemy(obj.enemies[i].x,obj.enemies[i].y));
+                        break;
+                }
+            }
+        }
     }
+}
+
+var getAngle=function(dx,dy) {
+    if (dx==0) {return (dy>0?Math.PI/2:-Math.PI/2);}
+    return Math.atan(dy/dx)+(dx>0?0:Math.PI);
 }

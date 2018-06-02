@@ -12,6 +12,7 @@ var init=function() {
 var player=new Player(100,100);
 var camera={"x":100,"y":100};
 var walls=[];
+var entities=[];
 var cover=[];
 
 var chunkLoadQueue=[];
@@ -23,6 +24,13 @@ var gameLoop=function() {
 }
 
 var update=function() {
+    for (var i=0; i<entities.length; i++) {
+        entities[i].update();
+        if (!entities[i].alive) {
+            entities.splice(i,1);
+            i--;
+        }
+    }
     player.update();
     camera.x=player.hitbox.x;
     camera.y=player.hitbox.y;
@@ -46,6 +54,9 @@ var render=function() {
     for (var i=0; i<walls.length; i++) {
         walls[i].render(ctx,screenBox);
     }
+    for (var i=0; i<entities.length; i++) {
+        entities[i].render(ctx,screenBox);
+    }
     ctx.translate(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2);
 }
 
@@ -67,6 +78,10 @@ var loadInChunk=function(x,y,z,chunk) {
     for (var i=0; i<chunk.groundCover.length; i++) {
         chunk.groundCover[i].translate(x*1000,y*1000);
         cover.push(chunk.groundCover[i]);
+    }
+    for (var i=0; i<chunk.enemies.length; i++) {
+        chunk.enemies[i].translate(x*1000,y*1000);
+        entities.push(chunk.enemies[i]);
     }
 }
 
@@ -125,6 +140,16 @@ var purgeObjects=function(rect) {
             i--;
         }
     }
+    for (var i=0; i<entities.length; i++) {
+        if (entities[i].intersectsRect(rect)) {
+            entities.splice(i,1);
+            i--;
+        }
+    }
+}
+
+var addEntity=function(entity) {
+    entities.push(entity);
 }
 
 var canBeSeen=function(x,y,z) {

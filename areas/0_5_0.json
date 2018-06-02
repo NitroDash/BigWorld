@@ -1,5 +1,8 @@
 {
     "walls":[
         {"type":"circle","x":200,"y":200,"r":100}
+    ],
+    "enemies":[
+        {"type":"test","x":600,"y":700}
     ]
 }
