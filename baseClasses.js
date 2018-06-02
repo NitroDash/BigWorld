@@ -33,6 +33,10 @@ class Vector {
         if (mag==0) {return new Vector(0,0);}
         return new Vector(this.x*m/mag,this.y*m/mag);
     }
+    
+    add(v) {
+        return new Vector(this.x+v.x,this.y+v.y);
+    }
 }
 
 class Point {
@@ -74,6 +78,10 @@ class Segment {
         this.v.x=this.p2.x-this.p1.x;
         this.v.y=this.p2.y-this.p1.y;
         this.boundBox=new BoundBox(Math.min(this.p1.x,this.p2.x),Math.min(this.p1.y,this.p2.y),Math.abs(this.p2.x-this.p1.x),Math.abs(this.p2.y-this.p1.y));
+    }
+    
+    getMidpoint() {
+        return new Point((this.p1.x+this.p2.x)/2,(this.p1.y+this.p2.y)/2);
     }
     
     rotate(x,y,theta) {
@@ -243,6 +251,7 @@ class Chunk {
         this.groundCover=[];
         this.enemies=[];
         if (!obj) {obj=defaultResp;}
+        this.seed=obj.seed?obj.seed:0;
         if (obj.walls) {
             for (var i=0; i<obj.walls.length; i++) {
                 switch (obj.walls[i].type) {
@@ -251,6 +260,35 @@ class Chunk {
                         break;
                     case "poly":
                         this.walls.push(new PolygonWall(obj.walls[i].x,obj.walls[i].y));
+                        break;
+                    case "tree":
+                        this.walls.push(new Tree(obj.walls[i].x,obj.walls[i].y,obj.walls[i].w,obj.walls[i].h,this.seed+1));
+                        this.seed=advanceSeed(this.seed);
+                        break;
+                    case "forest":
+                        var testRect=new BoundBox(0,0,obj.walls[i].w+2*obj.walls[i].spacing,obj.walls[i].h+2*obj.walls[i].spacing);
+                        var maxX=1000-testRect.w;
+                        var maxY=1000-testRect.h;
+                        var addRects=[];
+                        for (var k=0; k<40; k++) {
+                            this.seed=advanceSeed(this.seed);
+                            testRect.x=this.seed%maxX;
+                            this.seed=advanceSeed(this.seed);
+                            testRect.y=this.seed%maxY;
+                            var open=true;
+                            for (var j=0; j<addRects.length; j++) {
+                                if (addRects[j].intersectsRect(testRect)) {
+                                    open=false;
+                                    break;
+                                }
+                            }
+                            if (open) {
+                                addRects.push(new BoundBox(testRect.x+obj.walls[i].spacing,testRect.y+obj.walls[i].spacing,obj.walls[i].w,obj.walls[i].h));
+                            }
+                        }
+                        for (var j=0; j<addRects.length; j++) {
+                            this.walls.push(new Tree(addRects[j].x-obj.walls[i].spacing/2,addRects[j].y-obj.walls[i].spacing/2,addRects[j].w,addRects[j].h,advanceSeed(this.seed++)));
+                        }
                         break;
                 }
             }
@@ -285,4 +323,8 @@ class Chunk {
 var getAngle=function(dx,dy) {
     if (dx==0) {return (dy>0?Math.PI/2:-Math.PI/2);}
     return Math.atan(dy/dx)+(dx>0?0:Math.PI);
+}
+
+var advanceSeed=function(seed) {
+    return (57374*seed*seed+3914857*seed+598721)%1000000;
 }

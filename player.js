@@ -27,7 +27,7 @@ class Entity {
 class Player extends Entity {
     constructor(x,y) {
         super(x,y,20);
-        this.SPEED=10;
+        this.SPEED=5;
     }
     
     update() {
@@ -90,18 +90,22 @@ class TestShot extends Entity {
     update() {
         this.hitbox.translateVec(this.d);
         for (var i=0; i<walls.length; i++) {
-            if (walls[i].circleEjectVector(this.hitbox)) {
-                this.alive=false;
-                break;
+            var v=walls[i].circleEjectVector(this.hitbox);
+            if (v) {
+                v=v.scale(1);
+                var newX=-v.x*this.d.x-v.y*this.d.y;
+                this.d.y=-v.y*this.d.x+v.x*this.d.y;
+                this.d.x=v.x*newX-v.y*this.d.y;
+                this.d.y=v.y*newX+v.x*this.d.y;
             }
+        }
+        if (dist(this.hitbox.x-player.hitbox.x,this.hitbox.y-player.hitbox.y)>2000) {
+            this.alive=false;
         }
     }
     
     render(ctx,screen) {
-        if (!screen.intersectsCircle(this.hitbox)){
-            this.alive=false;
-            return;
-        }
+        if (!screen.intersectsCircle(this.hitbox)){return;}
         ctx.fillStyle="#f00";
         ctx.strokeStyle=black;
         ctx.beginPath();
