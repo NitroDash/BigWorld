@@ -239,18 +239,20 @@ class ChunkCover {
     render(ctx,screen) {
         if (!this.boundBox.intersectsRect(screen)) {return;}
         ctx.fillStyle=this.fill;
-        ctx.fillRect(this.boundBox.x,this.boundBox.y,1000,1000);
+        ctx.fillRect(this.boundBox.x,this.boundBox.y,1002,1002);
     }
 }
 
-var defaultResp={"groundCover":[{"type":"circle","x":500,"y":500,"r":500,"fill":"#0ff"}]};
+var defaultResp=function(x,y,z) {
+    return {"bgFill":"#0b0","walls":[{"type":"forest","w":100,"h":200,"spacing":30}],"seed":Math.abs(5748*x+92381*y)};
+}
 
 class Chunk {
-    constructor(obj) {
+    constructor(obj,x,y,z) {
         this.walls=[];
         this.groundCover=[];
         this.enemies=[];
-        if (!obj) {obj=defaultResp;}
+        if (!obj) {obj=defaultResp(x,y,z);}
         this.seed=obj.seed?obj.seed:0;
         if (obj.walls) {
             for (var i=0; i<obj.walls.length; i++) {

@@ -1,0 +1,12 @@
+{
+    "walls":[
+        {"type":"forest","h":200,"w":100,"spacing":30}
+    ],
+    "seed":898,
+    "bgFill":"#0b0",
+    "enemies":[
+        {"type":"test","x":900,"y":900},
+        {"type":"test","x":860,"y":940},
+        {"type":"test","x":880,"y":840}
+    ]
+}

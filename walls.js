@@ -186,13 +186,11 @@ class Tree {
                 while (j<i+2&&thetas[j]<newT) {j++;}
                 thetas.splice(j,0,newT);
             }
-            console.log(thetas);
             for (var i=1; i<=thetas.length; i++) {
                 if (Math.abs(thetas[i%thetas.length]-thetas[i-1]+((i==thetas.length)?Math.PI*2:0))>1) {
                     thetas.splice(i,0,(thetas[i%thetas.length]+thetas[i-1])/2+((i==thetas.length)?Math.PI:0));
                 }
             }
-            console.log(thetas);
             var leavesX=[];
             var leavesY=[];
             for (var i=0; i<thetas.length; i++) {
@@ -203,6 +201,8 @@ class Tree {
         } else {
             this.leaves=new PolygonWall([cx,x+w,x],[y,y+h*5/6,y+h*5/6]);
         }
+        seed=advanceSeed(seed);
+        this.leafFill="rgb("+(seed%57)+","+(110+seed%36)+","+(seed%53)+")";
         this.boundBox=new BoundBox(Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),Math.abs(this.leaves.boundBox.x+this.leaves.boundBox.w-this.trunk.boundBox.x-this.trunk.boundBox.w),Math.abs(this.leaves.boundBox.y+this.leaves.boundBox.h-this.trunk.boundBox.y-this.trunk.boundBox.h));
     }
     
@@ -233,7 +233,7 @@ class Tree {
             this.trunk.fill(ctx);
         }
         if (screen.intersectsRect(this.leaves.boundBox)) {
-            ctx.fillStyle="#080";
+            ctx.fillStyle=this.leafFill;
             this.leaves.fill(ctx);
         }
     }

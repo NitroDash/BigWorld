@@ -1,0 +1,7 @@
+{
+    "walls":[
+        {"type":"forest","h":200,"w":100,"spacing":25}
+    ],
+    "seed":7182,
+    "bgFill":"#0b0"
+}

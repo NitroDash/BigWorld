@@ -78,7 +78,7 @@ function loadArea(x,y,z) {
 function loadChunk(x,y,z) {
     if (addToLoadQueue(x,y,z)) {
         loadJSON("areas/"+x+"_"+y+"_"+z+".json",function(resp) {
-            loadInChunk(x,y,z,new Chunk(resp));
+            loadInChunk(x,y,z,new Chunk(resp,x,y,z));
         });
     }
 }

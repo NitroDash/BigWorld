@@ -16,8 +16,9 @@ function keyboard(keyCode) {
         if (key.onPress!=null) {
             key.onPress();
         }
+    } else {
+        event.preventDefault();
     }
-    event.preventDefault();
   };
 
   //The `upHandler`
@@ -26,8 +27,9 @@ function keyboard(keyCode) {
       if (key.isDown && key.release) key.release();
       key.isDown = false;
       key.isUp = true;
+    } else {
+        event.preventDefault();
     }
-    event.preventDefault();
   };
     
     key.resetPress=function() {
