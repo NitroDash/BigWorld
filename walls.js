@@ -21,9 +21,9 @@ class Wall {
 }
 
 class CircleWall {
-    constructor(x,y,r) {
-        this.hitbox=new Circle(x,y,r);
-        this.boundBox=new BoundBox(x-r,y-r,r+r,r+r);
+    constructor(x,y,r,z) {
+        this.hitbox=new Circle(x,y,r,z);
+        this.boundBox=new BoundBox(x-r,y-r,r+r,r+r,z);
     }
     
     circleEjectVector(c) {
@@ -35,7 +35,8 @@ class CircleWall {
         this.boundBox.translate(x,y);
     }
     
-    render(ctx) {
+    render(ctx,screen) {
+        if (!screen.intersectsRect(this.boundBox)) {return;}
         ctx.fillStyle=black;
         ctx.beginPath();
         ctx.arc(this.hitbox.x,this.hitbox.y,this.hitbox.r,0,2*Math.PI);
@@ -44,14 +45,14 @@ class CircleWall {
 }
 
 class PolygonWall {
-    constructor(x,y) {
-        this.walls=[new Segment(x[x.length-1],y[y.length-1],x[0],y[0])];
+    constructor(x,y,z) {
+        this.walls=[new Segment(x[x.length-1],y[y.length-1],x[0],y[0],z)];
         var minX=x[x.length-1];
         var maxX=minX;
         var minY=y[y.length-1];
         var maxY=minY;
         for (var i=0; i<x.length-1; i++) {
-            this.walls.push(new Segment(x[i],y[i],x[i+1],y[i+1]));
+            this.walls.push(new Segment(x[i],y[i],x[i+1],y[i+1],z));
             if (x[i]<minX) {
                 minX=x[i];
             } else if (x[i]>maxX) {
@@ -73,7 +74,7 @@ class PolygonWall {
                 i--;
             }
         }
-        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY);
+        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY,z);
     }
     
     translate(x,y) {
@@ -100,7 +101,7 @@ class PolygonWall {
                 maxY=this.walls[i].p1.y;
             }
         }
-        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY);
+        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY,this.boundBox.z);
     }
     
     rotate(x,y,theta) {
@@ -156,7 +157,7 @@ class PolygonWall {
 }
 
 class Tree {
-    constructor(x,y,w,h,seed) {
+    constructor(x,y,w,h,seed,z) {
         var trunkWidth=w*(seed*0.0000002+0.2);
         seed=advanceSeed(seed);
         var cx=x+w/2;
@@ -175,7 +176,7 @@ class Tree {
         seed=advanceSeed(seed);
         trunkX.push(cx+trunkWidth-sampX);
         trunkY.push(y+h-a*sampX*sampX);
-        this.trunk=new PolygonWall(trunkX,trunkY);
+        this.trunk=new PolygonWall(trunkX,trunkY,z);
         if (seed%11<7) {
             var cy=y+h/3;
             var thetas=[0.7,2.4];
@@ -197,13 +198,13 @@ class Tree {
                 leavesX.push(Math.cos(thetas[i])*w/2+cx);
                 leavesY.push(Math.sin(thetas[i])*h/3+cy);
             }
-            this.leaves=new PolygonWall(leavesX,leavesY);
+            this.leaves=new PolygonWall(leavesX,leavesY,z);
         } else {
-            this.leaves=new PolygonWall([cx,x+w,x],[y,y+h*5/6,y+h*5/6]);
+            this.leaves=new PolygonWall([cx,x+w,x],[y,y+h*5/6,y+h*5/6],z);
         }
         seed=advanceSeed(seed);
         this.leafFill="rgb("+(seed%57)+","+(110+seed%36)+","+(seed%53)+")";
-        this.boundBox=new BoundBox(Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),Math.abs(this.leaves.boundBox.x+this.leaves.boundBox.w-this.trunk.boundBox.x-this.trunk.boundBox.w),Math.abs(this.leaves.boundBox.y+this.leaves.boundBox.h-this.trunk.boundBox.y-this.trunk.boundBox.h));
+        this.boundBox=new BoundBox(Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),Math.abs(this.leaves.boundBox.x+this.leaves.boundBox.w-this.trunk.boundBox.x-this.trunk.boundBox.w),Math.abs(this.leaves.boundBox.y+this.leaves.boundBox.h-this.trunk.boundBox.y-this.trunk.boundBox.h),z);
     }
     
     translate(x,y) {
@@ -236,5 +237,38 @@ class Tree {
             ctx.fillStyle=this.leafFill;
             this.leaves.fill(ctx);
         }
+    }
+}
+
+class Cabin {
+    constructor(x,y,w,h,z) {
+        var roofHeight=w/4;
+        this.boundary=new PolygonWall([x,x+w/2,x+w,x+w,x+w/2+40,x+w/2+40,x+w/2-40,x+w/2-40,x],[y+roofHeight,y,y+roofHeight,y+h,y+h,y+h-120,y+h-120,y+h,y+h],z);
+        this.boundBox=this.boundary.boundBox;
+        this.door=new PolyCover([x+w/2+40,x+w/2+40,x+w/2-40,x+w/2-40],[y+h,y+h-120,y+h-120,y+h],"#c70",true,z);
+        this.doorknob=new CircleCover(x+w/2+25,y+h-60,10,"#cd2",true,z);
+    }
+    
+    translate(x,y) {
+        this.boundary.translate(x,y);
+        this.door.translate(x,y);
+        this.doorknob.translate(x,y);
+    }
+    
+    getDoorWarp(dest) {
+        return new Warp(this.boundBox.x+this.boundBox.w/2,this.boundBox.y+this.boundBox.h-40,40,dest,z);
+    }
+    
+    circleEjectVector(c) {
+        return this.boundary.circleEjectVector(c);
+    }
+    
+    render(ctx,screen) {
+        if (!screen.intersectsRect(this.boundBox)) {return;}
+        ctx.fillStyle="#641";
+        ctx.strokeStyle=black;
+        this.boundary.fill(ctx);
+        this.door.render(ctx,screen);
+        this.doorknob.render(ctx,screen);
     }
 }

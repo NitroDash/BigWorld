@@ -9,11 +9,16 @@ var init=function() {
     gameLoop();
 }
 
-var player=new Player(100,100);
+var player=new Player(100,100,0);
 var camera={"x":100,"y":100};
 var walls=[];
 var entities=[];
 var cover=[];
+var warps=[];
+
+var z=0;
+var warpCounter=0;
+var warpDest=null;
 
 var chunkLoadQueue=[];
 
@@ -24,14 +29,33 @@ var gameLoop=function() {
 }
 
 var update=function() {
+    if (warpCounter>0) {
+        warpCounter--;
+        if (warpCounter==0) {
+            player.warpTo(warpDest);
+            z=warpDest.chunk.z;
+            camera.x=player.hitbox.x;
+            camera.y=player.hitbox.y;
+        }
+        return;
+    }
     for (var i=0; i<entities.length; i++) {
-        entities[i].update();
-        if (!entities[i].alive) {
-            entities.splice(i,1);
-            i--;
+        if (entities[i].hitbox.z==z) {
+            entities[i].update();
+            if (!entities[i].alive) {
+                entities.splice(i,1);
+                i--;
+            }
         }
     }
     player.update();
+    for (var i=0; i<warps.length; i++) {
+        if (warps[i].intersectsCircle(player.hitbox)) {
+            loadArea(warps[i].dest.chunk.x,warps[i].dest.chunk.y,warps[i].dest.chunk.z);
+            warpCounter=20;
+            warpDest=warps[i].dest;
+        }
+    }
     camera.x=player.hitbox.x;
     camera.y=player.hitbox.y;
     checkForChunkLoads();
@@ -46,17 +70,18 @@ var render=function() {
     screenBox.h=ctx.canvas.height;
     screenBox.x=camera.x-screenBox.w/2;
     screenBox.y=camera.y-screenBox.h/2;
+    screenBox.z=z;
     ctx.translate(ctx.canvas.width/2-camera.x,ctx.canvas.height/2-camera.y);
     for (var i=0; i<cover.length; i++) {
         cover[i].render(ctx,screenBox);
     }
-    player.render(ctx);
     for (var i=0; i<walls.length; i++) {
         walls[i].render(ctx,screenBox);
     }
     for (var i=0; i<entities.length; i++) {
         entities[i].render(ctx,screenBox);
     }
+    player.render(ctx,screenBox);
     ctx.translate(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2);
 }
 
@@ -83,6 +108,10 @@ var loadInChunk=function(x,y,z,chunk) {
         chunk.enemies[i].translate(x*1000,y*1000);
         entities.push(chunk.enemies[i]);
     }
+    for (var i=0; i<chunk.warps.length; i++) {
+        chunk.warps[i].translate(x*1000,y*1000);
+        warps.push(chunk.warps[i]);
+    }
 }
 
 var checkForChunkLoads=function() {
@@ -90,7 +119,7 @@ var checkForChunkLoads=function() {
     var y=Math.floor(player.hitbox.y/1000);
     for (var dx=-1; dx<=1; dx++) {
         for (var dy=-1; dy<=1; dy++) {
-            loadChunk(x+dx,y+dy,0);
+            loadChunk(x+dx,y+dy,z);
         }
     }
 }
@@ -115,7 +144,7 @@ var addToLoadQueue=function(x,y,z) {
         }
     }
     chunkLoadQueue.push(new ChunkLoad(x,y,z));
-    if (chunkLoadQueue.length>20) {
+    if (chunkLoadQueue.length>40) {
         for (var i=0; i<chunkLoadQueue.length; i++) {
             if (!canBeSeen(chunkLoadQueue[i].x,chunkLoadQueue[i].y,chunkLoadQueue[i].z)&&chunkLoadQueue[i].status==1) {
                 purgeObjects(new BoundBox(chunkLoadQueue[i].x*1000+1,chunkLoadQueue[i].y*1000+1,998,998));
@@ -143,6 +172,12 @@ var purgeObjects=function(rect) {
     for (var i=0; i<entities.length; i++) {
         if (entities[i].intersectsRect(rect)) {
             entities.splice(i,1);
+            i--;
+        }
+    }
+    for (var i=0; i<warps.length; i++) {
+        if (warps[i].boundBox.intersectsRect(rect)) {
+            warps.splice(i,1);
             i--;
         }
     }

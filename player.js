@@ -1,8 +1,8 @@
 var black="#000";
 
 class Entity {
-    constructor(x,y,r) {
-        this.hitbox=new Circle(x,y,r);
+    constructor(x,y,r,z) {
+        this.hitbox=new Circle(x,y,r,z);
         this.alive=true;
     }
     
@@ -12,11 +12,17 @@ class Entity {
         this.hitbox.translate(x,y);
     }
     
+    warpTo(dest) {
+        this.translate(dest.chunk.x*1000+dest.x-this.hitbox.x,dest.chunk.y*1000+dest.y-this.hitbox.y);
+        this.hitbox.z=dest.chunk.z;
+    }
+    
     intersectsRect(rect) {
         return rect.intersectsCircle(this.hitbox);
     }
     
-    render(ctx) {
+    render(ctx,screen) {
+        if (!screen.intersectsCircle(this.hitbox)) {return;}
         ctx.fillStyle=black;
         ctx.beginPath();
         ctx.arc(this.hitbox.x,this.hitbox.y,this.hitbox.r,0,2*Math.PI);
@@ -25,8 +31,8 @@ class Entity {
 }
 
 class Player extends Entity {
-    constructor(x,y) {
-        super(x,y,20);
+    constructor(x,y,z) {
+        super(x,y,20,z);
         this.SPEED=5;
     }
     
@@ -51,8 +57,8 @@ class Player extends Entity {
 }
 
 class TestEnemy extends Entity {
-    constructor(x,y) {
-        super(x,y,15);
+    constructor(x,y,z) {
+        super(x,y,15,z);
         this.shotTimer=60;
     }
     
@@ -62,7 +68,7 @@ class TestEnemy extends Entity {
             this.shotTimer--;
             if (this.shotTimer<=0) {
                 this.shotTimer=60;
-                addEntity(new TestShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y)));
+                addEntity(new TestShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y),z));
             }
         }
         for (var i=0; i<walls.length; i++) {
@@ -82,8 +88,8 @@ class TestEnemy extends Entity {
 }
 
 class TestShot extends Entity {
-    constructor(x,y,theta) {
-        super(x,y,5);
+    constructor(x,y,theta,z) {
+        super(x,y,5,z);
         this.d=new Vector(5*Math.cos(theta),5*Math.sin(theta));
     }
     

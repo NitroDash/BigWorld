@@ -1,7 +1,9 @@
 {
     "walls":[
-        {"type":"forest","h":200,"w":100,"spacing":30}
+        {"type":"cabin","x":600,"y":100,"w":400,"h":400,"dest":{
+            "chunk":{"x":-1,"y":2,"z":1},
+            "x":500,"y":435
+        }}
     ],
-    "seed":899,
     "bgFill":"#0b0"
 }

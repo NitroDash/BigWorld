@@ -67,17 +67,17 @@ class Point {
 }
 
 class Segment {
-    constructor(x1,y1,x2,y2) {
+    constructor(x1,y1,x2,y2,z) {
         this.p1=new Point(x1,y1);
         this.p2=new Point(x2,y2);
         this.v=new Vector(x2-x1,y2-y1);
-        this.boundBox=new BoundBox(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1));
+        this.boundBox=new BoundBox(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1),z);
     }
     
     updateV() {
         this.v.x=this.p2.x-this.p1.x;
         this.v.y=this.p2.y-this.p1.y;
-        this.boundBox=new BoundBox(Math.min(this.p1.x,this.p2.x),Math.min(this.p1.y,this.p2.y),Math.abs(this.p2.x-this.p1.x),Math.abs(this.p2.y-this.p1.y));
+        this.boundBox=new BoundBox(Math.min(this.p1.x,this.p2.x),Math.min(this.p1.y,this.p2.y),Math.abs(this.p2.x-this.p1.x),Math.abs(this.p2.y-this.p1.y),this.boundBox.z);
     }
     
     getMidpoint() {
@@ -109,10 +109,11 @@ class Segment {
 }
 
 class Circle {
-    constructor(x,y,r) {
+    constructor(x,y,r,z) {
         this.x=x;
         this.y=y;
         this.r=r;
+        this.z=z;
     }
     
     containsPoint(x,y) {
@@ -139,11 +140,12 @@ class Circle {
 }
 
 class BoundBox {
-    constructor(x,y,w,h) {
+    constructor(x,y,w,h,z) {
         this.x=x;
         this.y=y;
         this.w=w;
         this.h=h;
+        this.z=z;
     }
     
     translate(x,y) {
@@ -152,19 +154,20 @@ class BoundBox {
     }
     
     intersectsCircle(c) {
-        return c.x-c.r<=this.x+this.w&&c.x+c.r>=this.x&&c.y-c.r<=this.y+this.h&&c.y+c.r>=this.y;
+        return this.z==c.z&&c.x-c.r<=this.x+this.w&&c.x+c.r>=this.x&&c.y-c.r<=this.y+this.h&&c.y+c.r>=this.y;
     }
     
     intersectsRect(r) {
-        return r.x<=this.x+this.w&&r.x+r.w>=this.x&&r.y<=this.y+this.h&&r.y+r.h>=this.y;
+        return r.z==this.z&&r.x<=this.x+this.w&&r.x+r.w>=this.x&&r.y<=this.y+this.h&&r.y+r.h>=this.y;
     }
 }
 
 class CircleCover {
-    constructor(x,y,r,fill) {
-        this.hitbox=new Circle(x,y,r);
+    constructor(x,y,r,fill,stroke,z) {
+        this.hitbox=new Circle(x,y,r,z);
         this.fill=fill;
-        this.boundBox=new BoundBox(x-r,y-r,r+r,r+r);
+        this.stroke=stroke;
+        this.boundBox=new BoundBox(x-r,y-r,r+r,r+r,z);
     }
     
     translate(x,y) {
@@ -175,17 +178,20 @@ class CircleCover {
     render(ctx,screen) {
         if (screen.intersectsCircle(this.hitbox)) {
             ctx.fillStyle=this.fill;
+            ctx.strokeStyle=black;
             ctx.beginPath();
             ctx.arc(this.hitbox.x,this.hitbox.y,this.hitbox.r,0,2*Math.PI);
             ctx.fill();
+            if (this.stroke) {ctx.stroke();}
         }
     }
 }
 
 class PolyCover {
-    constructor(x,y,fill) {
+    constructor(x,y,fill,stroke,z) {
         this.x=x;
         this.y=y;
+        this.stroke=stroke;
         this.fill=fill;
         var minX=x[0];
         var minY=y[0];
@@ -203,7 +209,7 @@ class PolyCover {
                 maxY=y[i];
             }
         }
-        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY);
+        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY,z);
     }
     
     translate(x,y) {
@@ -217,18 +223,20 @@ class PolyCover {
     render(ctx,screen) {
         if (!screen.intersectsRect(this.boundBox)) {return;}
         ctx.fillStyle=this.fill;
+        ctx.strokeStyle=black;
         ctx.beginPath();
         ctx.moveTo(this.x[0],this.y[0]);
         for (var i=this.x.length-1; i>=0; i--) {
             ctx.lineTo(this.x[i],this.y[i]);
         }
         ctx.fill();
+        if (this.stroke) {ctx.stroke();}
     }
 }
 
 class ChunkCover {
-    constructor(x,y,fill) {
-        this.boundBox=new BoundBox(x,y,1000,1000);
+    constructor(x,y,fill,z) {
+        this.boundBox=new BoundBox(x,y,1000,1000,z);
         this.fill=fill;
     }
     
@@ -244,7 +252,8 @@ class ChunkCover {
 }
 
 var defaultResp=function(x,y,z) {
-    return {"bgFill":"#0b0","walls":[{"type":"forest","w":100,"h":200,"spacing":30}],"seed":Math.abs(5748*x+92381*y)};
+    return {"bgFill":"#000"};
+    //return {"bgFill":"#0b0","walls":[{"type":"forest","w":100,"h":200,"spacing":30}],"seed":Math.abs(5748*x+92381*y)};
 }
 
 class Chunk {
@@ -252,23 +261,24 @@ class Chunk {
         this.walls=[];
         this.groundCover=[];
         this.enemies=[];
+        this.warps=[];
         if (!obj) {obj=defaultResp(x,y,z);}
         this.seed=obj.seed?obj.seed:0;
         if (obj.walls) {
             for (var i=0; i<obj.walls.length; i++) {
                 switch (obj.walls[i].type) {
                     case "circle":
-                        this.walls.push(new CircleWall(obj.walls[i].x,obj.walls[i].y,obj.walls[i].r));
+                        this.walls.push(new CircleWall(obj.walls[i].x,obj.walls[i].y,obj.walls[i].r,z));
                         break;
                     case "poly":
-                        this.walls.push(new PolygonWall(obj.walls[i].x,obj.walls[i].y));
+                        this.walls.push(new PolygonWall(obj.walls[i].x,obj.walls[i].y,z));
                         break;
                     case "tree":
-                        this.walls.push(new Tree(obj.walls[i].x,obj.walls[i].y,obj.walls[i].w,obj.walls[i].h,this.seed+1));
+                        this.walls.push(new Tree(obj.walls[i].x,obj.walls[i].y,obj.walls[i].w,obj.walls[i].h,this.seed+1,z));
                         this.seed=advanceSeed(this.seed);
                         break;
                     case "forest":
-                        var testRect=new BoundBox(0,0,obj.walls[i].w+2*obj.walls[i].spacing,obj.walls[i].h+2*obj.walls[i].spacing);
+                        var testRect=new BoundBox(0,0,obj.walls[i].w+2*obj.walls[i].spacing,obj.walls[i].h+2*obj.walls[i].spacing,z);
                         var maxX=1000-testRect.w;
                         var maxY=1000-testRect.h;
                         var addRects=[];
@@ -285,27 +295,32 @@ class Chunk {
                                 }
                             }
                             if (open) {
-                                addRects.push(new BoundBox(testRect.x+obj.walls[i].spacing,testRect.y+obj.walls[i].spacing,obj.walls[i].w,obj.walls[i].h));
+                                addRects.push(new BoundBox(testRect.x+obj.walls[i].spacing,testRect.y+obj.walls[i].spacing,obj.walls[i].w,obj.walls[i].h,z));
                             }
                         }
                         for (var j=0; j<addRects.length; j++) {
-                            this.walls.push(new Tree(addRects[j].x-obj.walls[i].spacing/2,addRects[j].y-obj.walls[i].spacing/2,addRects[j].w,addRects[j].h,advanceSeed(this.seed++)));
+                            this.walls.push(new Tree(addRects[j].x-obj.walls[i].spacing/2,addRects[j].y-obj.walls[i].spacing/2,addRects[j].w,addRects[j].h,advanceSeed(this.seed++),z));
                         }
+                        break;
+                    case "cabin":
+                        var c=new Cabin(obj.walls[i].x,obj.walls[i].y,obj.walls[i].w,obj.walls[i].h,z);
+                        this.walls.push(c);
+                        this.warps.push(c.getDoorWarp(obj.walls[i].dest));
                         break;
                 }
             }
         }
         if (obj.bgFill) {
-            this.groundCover.push(new ChunkCover(0,0,obj.bgFill));
+            this.groundCover.push(new ChunkCover(0,0,obj.bgFill,z));
         }
         if (obj.groundCover) {
             for (var i=0; i<obj.groundCover.length; i++) {
                 switch(obj.groundCover[i].type) {
                     case "circle":
-                        this.groundCover.push(new CircleCover(obj.groundCover[i].x,obj.groundCover[i].y,obj.groundCover[i].r,obj.groundCover[i].fill));
+                        this.groundCover.push(new CircleCover(obj.groundCover[i].x,obj.groundCover[i].y,obj.groundCover[i].r,obj.groundCover[i].fill,obj.groundCover[i].stroke,z));
                         break;
                     case "poly":
-                        this.groundCover.push(new PolyCover(obj.groundCover[i].x,obj.groundCover[i].y,obj.groundCover[i].fill));
+                        this.groundCover.push(new PolyCover(obj.groundCover[i].x,obj.groundCover[i].y,obj.groundCover[i].fill,obj.groundCover[i].stroke,z));
                         break;
                 }
             }
@@ -314,9 +329,14 @@ class Chunk {
             for (var i=0; i<obj.enemies.length; i++) {
                 switch(obj.enemies[i].type) {
                     case "test":
-                        this.enemies.push(new TestEnemy(obj.enemies[i].x,obj.enemies[i].y));
+                        this.enemies.push(new TestEnemy(obj.enemies[i].x,obj.enemies[i].y,z));
                         break;
                 }
+            }
+        }
+        if (obj.warps) {
+            for (var i=0; i<obj.warps.length; i++) {
+                this.warps.push(new Warp(obj.warps[i].x,obj.warps[i].y,obj.warps[i].r,obj.warps[i].dest,z));
             }
         }
     }
@@ -329,4 +349,24 @@ var getAngle=function(dx,dy) {
 
 var advanceSeed=function(seed) {
     return (57374*seed*seed+3914857*seed+598721)%1000000;
+}
+
+class Warp {
+    constructor(x,y,r,dest,z) {
+        this.x=x;
+        this.y=y;
+        this.r=r;
+        this.dest=dest;
+        this.boundBox=new BoundBox(x-r,y-r,r+r,r+r,z);
+    }
+    
+    intersectsCircle(c) {
+        return c.z==this.boundBox.z&&dist(c.x-this.x,c.y-this.y)<=this.r+c.r;
+    }
+    
+    translate(x,y) {
+        this.x+=x;
+        this.y+=y;
+        this.boundBox.translate(x,y);
+    }
 }
