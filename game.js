@@ -29,30 +29,41 @@ var gameLoop=function() {
 }
 
 var update=function() {
-    if (warpCounter>0) {
-        warpCounter--;
-        if (warpCounter==0) {
+    if (warpCounter!=0) {
+        warpCounter++;
+        if (warpCounter==30) {
+            screenBox.x=player.hitbox.x-500;
+            screenBox.y=player.hitbox.y-500;
+            screenBox.w=1000;
+            screenBox.h=1000;
+            screenBox.z=player.hitbox.z;
+            for (var i=0; i<entities.length; i++) {
+                if (entities[i].intersectsRect(screenBox)) {
+                    entities[i].reset();
+                }
+            }
             player.warpTo(warpDest);
             z=warpDest.chunk.z;
             camera.x=player.hitbox.x;
             camera.y=player.hitbox.y;
+            warpCounter=-30;
         }
         return;
     }
     for (var i=0; i<entities.length; i++) {
         if (entities[i].hitbox.z==z) {
             entities[i].update();
-            if (!entities[i].alive) {
-                entities.splice(i,1);
-                i--;
-            }
+        }
+        if (!entities[i].alive) {
+            entities.splice(i,1);
+            i--;
         }
     }
     player.update();
     for (var i=0; i<warps.length; i++) {
         if (warps[i].intersectsCircle(player.hitbox)) {
             loadArea(warps[i].dest.chunk.x,warps[i].dest.chunk.y,warps[i].dest.chunk.z);
-            warpCounter=20;
+            warpCounter=1;
             warpDest=warps[i].dest;
         }
     }
@@ -72,6 +83,14 @@ var render=function() {
     screenBox.y=camera.y-screenBox.h/2;
     screenBox.z=z;
     ctx.translate(ctx.canvas.width/2-camera.x,ctx.canvas.height/2-camera.y);
+    ctx.fillStyle=black;
+    if (warpCounter!=0) {
+        ctx.fillRect(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2,ctx.canvas.width,ctx.canvas.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(camera.x,camera.y,Math.max((1-Math.abs(warpCounter)/25)*Math.max(ctx.canvas.width,ctx.canvas.height)/2,1),0,2*Math.PI);
+        ctx.clip();
+    }
     for (var i=0; i<cover.length; i++) {
         cover[i].render(ctx,screenBox);
     }
@@ -82,6 +101,9 @@ var render=function() {
         entities[i].render(ctx,screenBox);
     }
     player.render(ctx,screenBox);
+    if (warpCounter!=0) {
+        ctx.restore();
+    }
     ctx.translate(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2);
 }
 
@@ -135,6 +157,15 @@ class ChunkLoad {
     matches(x,y,z) {
         return this.x==x&&this.y==y&&this.z==z;
     }
+}
+
+var isLoaded=function(x,y,z) {
+    for (var i=0; i<chunkLoadQueue.length; i++) {
+        if (chunkLoadQueue[i].matches(x,y,z)) {
+            return chunkLoadQueue[i].status==1?true:false;
+        }
+    }
+    return false;
 }
 
 var addToLoadQueue=function(x,y,z) {

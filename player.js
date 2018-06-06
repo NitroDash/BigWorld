@@ -12,6 +12,10 @@ class Entity {
         this.hitbox.translate(x,y);
     }
     
+    reset() {
+        this.alive=false;
+    }
+    
     warpTo(dest) {
         this.translate(dest.chunk.x*1000+dest.x-this.hitbox.x,dest.chunk.y*1000+dest.y-this.hitbox.y);
         this.hitbox.z=dest.chunk.z;
@@ -54,6 +58,8 @@ class Player extends Entity {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
         }
     }
+    
+    reset() {}
 }
 
 class TestEnemy extends Entity {
