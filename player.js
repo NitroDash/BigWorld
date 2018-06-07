@@ -74,7 +74,7 @@ class TestEnemy extends Entity {
             this.shotTimer--;
             if (this.shotTimer<=0) {
                 this.shotTimer=60;
-                addEntity(new TestShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y),z));
+                addEntity(new TestShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y),this.hitbox.z));
             }
         }
         for (var i=0; i<walls.length; i++) {
