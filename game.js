@@ -178,7 +178,7 @@ var addToLoadQueue=function(x,y,z) {
     if (chunkLoadQueue.length>40) {
         for (var i=0; i<chunkLoadQueue.length; i++) {
             if (!canBeSeen(chunkLoadQueue[i].x,chunkLoadQueue[i].y,chunkLoadQueue[i].z)&&chunkLoadQueue[i].status==1) {
-                purgeObjects(new BoundBox(chunkLoadQueue[i].x*1000+1,chunkLoadQueue[i].y*1000+1,998,998));
+                purgeObjects(new BoundBox(chunkLoadQueue[i].x*1000+1,chunkLoadQueue[i].y*1000+1,998,998,chunkLoadQueue[i].z));
                 chunkLoadQueue.splice(i,1);
                 break;
             }

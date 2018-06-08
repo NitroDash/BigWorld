@@ -204,7 +204,7 @@ class Tree {
         }
         seed=advanceSeed(seed);
         this.leafFill="rgb("+(seed%57)+","+(110+seed%36)+","+(seed%53)+")";
-        this.boundBox=new BoundBox(Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),Math.abs(this.leaves.boundBox.x+this.leaves.boundBox.w-this.trunk.boundBox.x-this.trunk.boundBox.w),Math.abs(this.leaves.boundBox.y+this.leaves.boundBox.h-this.trunk.boundBox.y-this.trunk.boundBox.h),z);
+        this.boundBox=new BoundBox(Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),Math.max(this.leaves.boundBox.x+this.leaves.boundBox.w,this.trunk.boundBox.x+this.trunk.boundBox.w)-Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.max(this.leaves.boundBox.y+this.leaves.boundBox.h,this.trunk.boundBox.y+this.trunk.boundBox.h)-Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),z);
     }
     
     translate(x,y) {
