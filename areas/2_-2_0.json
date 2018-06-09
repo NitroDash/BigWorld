@@ -1,0 +1,6 @@
+{
+    "bgFill":"#00f",
+    "terrain":[
+        {"type":"water","hitbox":{"type":"chunk"}}
+    ]
+}

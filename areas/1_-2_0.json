@@ -1,0 +1,10 @@
+{
+    "bgFill":"#00f",
+    "groundCover":[
+        {"type":"circle","x":500,"y":500,"r":300,"fill":"#0b0"}
+    ],
+    "terrain":[
+        {"type":"land","hitbox":{"type":"circle","x":500,"y":500,"r":300}},
+        {"type":"water","hitbox":{"type":"chunk"}}
+    ]
+}

@@ -52,7 +52,13 @@ class Player extends Entity {
         } else if (keys[3].isDown) {
             d.x=1;
         }
-        d=d.scale(this.SPEED);
+        var speed=this.SPEED;
+        switch(getTerrain(this.hitbox.x,this.hitbox.y,this.hitbox.z).type) {
+            case "water":
+                speed/=2;
+                break;
+        }
+        d=d.scale(speed);
         this.hitbox.translateVec(d);
         for (var i=0; i<walls.length; i++) {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));

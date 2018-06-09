@@ -15,6 +15,7 @@ var walls=[];
 var entities=[];
 var cover=[];
 var warps=[];
+var terrain=[];
 
 var z=0;
 var warpCounter=0;
@@ -70,6 +71,17 @@ var update=function() {
     camera.x=player.hitbox.x;
     camera.y=player.hitbox.y;
     checkForChunkLoads();
+}
+
+var defaultTerrain=new ChunkTerrain("land");
+
+var getTerrain=function(x,y,z) {
+    for (var i=0; i<terrain.length; i++) {
+        if (terrain[i].contains(x,y,z)) {
+            return terrain[i];
+        }
+    }
+    return defaultTerrain;
 }
 
 var screenBox=new BoundBox(0,0,0,0);
@@ -133,6 +145,10 @@ var loadInChunk=function(x,y,z,chunk) {
     for (var i=0; i<chunk.warps.length; i++) {
         chunk.warps[i].translate(x*1000,y*1000);
         warps.push(chunk.warps[i]);
+    }
+    for (var i=0; i<chunk.terrain.length; i++) {
+        chunk.terrain[i].translate(x*1000,y*1000);
+        terrain.push(chunk.terrain[i]);
     }
 }
 
@@ -209,6 +225,12 @@ var purgeObjects=function(rect) {
     for (var i=0; i<warps.length; i++) {
         if (warps[i].boundBox.intersectsRect(rect)) {
             warps.splice(i,1);
+            i--;
+        }
+    }
+    for (var i=0; i<terrain.length; i++) {
+        if (terrain[i].boundBox.intesectsRect(rect)) {
+            terrain.splice(i,1);
             i--;
         }
     }

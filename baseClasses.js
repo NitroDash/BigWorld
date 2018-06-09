@@ -160,6 +160,10 @@ class BoundBox {
     intersectsRect(r) {
         return r.z==this.z&&r.x<=this.x+this.w&&r.x+r.w>=this.x&&r.y<=this.y+this.h&&r.y+r.h>=this.y;
     }
+    
+    containsPoint(x,y,z) {
+        return z==this.z&&x>=this.x&&y>=this.y&&x<=this.x+this.w&&y<=this.y+this.h;
+    }
 }
 
 class CircleCover {
@@ -251,6 +255,93 @@ class ChunkCover {
     }
 }
 
+class ChunkTerrain {
+    constructor(type,z) {
+        this.type=type;
+        this.boundBox=new BoundBox(0,0,1000,1000,z);
+    }
+    
+    translate(x,y) {
+        this.boundBox.translate(x,y);
+    }
+    
+    contains(x,y,z) {
+        return this.boundBox.containsPoint(x,y,z);
+    }
+}
+
+class CircleTerrain {
+    constructor(type,x,y,r,z) {
+        this.type=type;
+        this.x=x;
+        this.y=y;
+        this.r=r;
+        this.boundBox=new BoundBox(x-r,y-r,r+r,r+r,z);
+    }
+    
+    translate(x,y) {
+        this.boundBox.translate(x,y);
+        this.x+=x;
+        this.y+=y;
+    }
+    
+    contains(x,y,z) {
+        if (!this.boundBox.containsPoint(x,y,z)) return false;
+        return dist(x-this.x,y-this.y)<=this.r;
+    }
+}
+
+class PolyTerrain {
+    constructor(type,x,y,z) {
+        this.type=type;
+        this.x=x;
+        this.y=y;
+        this.numPoints=x.length;
+        var minX=x[0];
+        var minY=y[0];
+        var maxX=x[0];
+        var maxY=y[0];
+        for (var i=1; i<this.numPoints; i++) {
+            if (x[i]>maxX) {
+                maxX=x[i];
+            } else if (x[i]<minX) {
+                minX=x[i];
+            }
+            if (y[i]>maxY) {
+                maxY=y[i];
+            } else if (y[i]<minY) {
+                minY=y[i];
+            }
+        }
+        this.boundBox=new BoundBox(minX,minY,maxX-minX,maxY-minY,z);
+    }
+    
+    translate(x,y) {
+        this.boundBox.translate(x,y);
+        for (var i=0; i<this.numPoints; i++) {
+            this.x[i]+=x;
+            this.y[i]+=y;
+        }
+    }
+    
+    contains(x,y,z) {
+        var intersectCount=0;
+        if (!this.boundBox.containsPoint(x,y,z)) return false;
+        for (var i=0; i<this.numPoints; i++) {
+            if (crossesRay(this.x[i],this.y[i],this.x[(i+1)%this.numPoints],this.y[(i+1)%this.numPoints],x,y)) {
+                intersectCount++;
+            }
+        }
+        return (intersectCount%2)==1;
+    }
+}
+
+var crossesRay=function(x1,y1,x2,y2,x,y) {
+    if ((y1-y)*(y2-y)>=0) return false;
+    var amountAlong = (y-y1)/(y2-y1);
+    return x1+(x2-x1)*amountAlong>=x;
+}
+
 var defaultResp=function(x,y,z) {
     return {"bgFill":"#000"};
     //return {"bgFill":"#0b0","walls":[{"type":"forest","w":100,"h":200,"spacing":30}],"seed":Math.abs(5748*x+92381*y)};
@@ -262,6 +353,7 @@ class Chunk {
         this.groundCover=[];
         this.enemies=[];
         this.warps=[];
+        this.terrain=[];
         if (!obj) {obj=defaultResp(x,y,z);}
         this.seed=obj.seed?obj.seed:0;
         if (obj.walls) {
@@ -337,6 +429,21 @@ class Chunk {
         if (obj.warps) {
             for (var i=0; i<obj.warps.length; i++) {
                 this.warps.push(new Warp(obj.warps[i].x,obj.warps[i].y,obj.warps[i].r,obj.warps[i].dest,z));
+            }
+        }
+        if (obj.terrain) {
+            for (var i=0; i<obj.terrain.length; i++) {
+                switch(obj.terrain[i].hitbox.type) {
+                    case "poly":
+                        this.terrain.push(new PolyTerrain(obj.terrain[i].type,obj.terrain[i].hitbox.x,obj.terrain[i].hitbox.y,z));
+                        break;
+                    case "chunk":
+                        this.terrain.push(new ChunkTerrain(obj.terrain[i].type,z));
+                        break;
+                    case "circle":
+                        this.terrain.push(new CircleTerrain(obj.terrain[i].type,obj.terrain[i].hitbox.x,obj.terrain[i].hitbox.y,obj.terrain[i].hitbox.r,z));
+                        break;
+                }
             }
         }
     }
