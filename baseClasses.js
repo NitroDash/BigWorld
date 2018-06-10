@@ -1,6 +1,6 @@
 var dist=(Math.hypot)?Math.hypot:function(x,y) {return Math.sqrt(x*x+y*y);};
 
-var keys=[keyboard(87),keyboard(83),keyboard(65),keyboard(68)];
+var keys=[keyboard(87),keyboard(83),keyboard(65),keyboard(68),keyboard(32)];
 
 class Vector {
     constructor(x,y) {

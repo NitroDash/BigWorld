@@ -63,6 +63,9 @@ class Player extends Entity {
         for (var i=0; i<walls.length; i++) {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
         }
+        if (keys[4].isPressed) {
+            addEntity(new TestEnemy(camera.x-ctx.canvas.width/2+mouse.x,camera.y-ctx.canvas.height/2+mouse.y,this.hitbox.z));
+        }
     }
     
     reset() {}
@@ -110,6 +113,7 @@ class TestShot extends Entity {
         for (var i=0; i<walls.length; i++) {
             var v=walls[i].circleEjectVector(this.hitbox);
             if (v) {
+                this.hitbox.translateVec(v);
                 v=v.scale(1);
                 var newX=-v.x*this.d.x-v.y*this.d.y;
                 this.d.y=-v.y*this.d.x+v.x*this.d.y;

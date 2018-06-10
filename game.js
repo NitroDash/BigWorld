@@ -17,6 +17,17 @@ var cover=[];
 var warps=[];
 var terrain=[];
 
+var mouse={"x":0,"y":0};
+
+(function() {
+    document.onmousemove = handleMouseMove;
+    function handleMouseMove(event) {
+        event=event||window.event;
+        mouse.x=event.pageX;
+        mouse.y=event.pageY;
+    }
+})();
+
 var z=0;
 var warpCounter=0;
 var warpDest=null;
@@ -71,6 +82,9 @@ var update=function() {
     camera.x=player.hitbox.x;
     camera.y=player.hitbox.y;
     checkForChunkLoads();
+    for (var i=0; i<keys.length; i++) {
+        keys[i].isPressed=false;
+    }
 }
 
 var defaultTerrain=new ChunkTerrain("land");
@@ -229,7 +243,7 @@ var purgeObjects=function(rect) {
         }
     }
     for (var i=0; i<terrain.length; i++) {
-        if (terrain[i].boundBox.intesectsRect(rect)) {
+        if (terrain[i].boundBox.intersectsRect(rect)) {
             terrain.splice(i,1);
             i--;
         }
