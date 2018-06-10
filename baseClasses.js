@@ -34,6 +34,10 @@ class Vector {
         return new Vector(this.x*m/mag,this.y*m/mag);
     }
     
+    mult(m) {
+        return new Vector(this.x*m,this.y*m);
+    }
+    
     add(v) {
         return new Vector(this.x+v.x,this.y+v.y);
     }
@@ -136,6 +140,10 @@ class Circle {
         var v=new Vector(c.x-this.x,c.y-this.y);
         if (v.mag()>this.r+c.r) {return null;}
         return v.scale(this.r+c.r-v.mag());
+    }
+    
+    intersectsCircle(c) {
+        return c.z===this.z&&dist(c.x-this.x,c.y-this.y)<=this.r+c.r;
     }
 }
 

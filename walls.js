@@ -243,7 +243,7 @@ class Tree {
 class Cabin {
     constructor(x,y,w,h,z) {
         var roofHeight=w/4;
-        this.boundary=new PolygonWall([x,x+w/2,x+w,x+w,x+w/2+40,x+w/2+40,x+w/2-40,x+w/2-40,x],[y+roofHeight,y,y+roofHeight,y+h,y+h,y+h-120,y+h-120,y+h,y+h],z);
+        this.boundary=new PolygonWall([x,x+w/2,x+w,x+w,x],[y+roofHeight,y,y+roofHeight,y+h,y+h],z);
         this.boundBox=this.boundary.boundBox;
         this.door=new PolyCover([x+w/2+40,x+w/2+40,x+w/2-40,x+w/2-40],[y+h,y+h-120,y+h-120,y+h],"#c70",true,z);
         this.doorknob=new CircleCover(x+w/2+25,y+h-60,10,"#cd2",true,z);
@@ -256,7 +256,7 @@ class Cabin {
     }
     
     getDoorWarp(dest) {
-        return new Warp(this.boundBox.x+this.boundBox.w/2,this.boundBox.y+this.boundBox.h-40,40,dest,z);
+        return new Warp(this.boundBox.x+this.boundBox.w/2,this.boundBox.y+this.boundBox.h-30,40,dest,z);
     }
     
     circleEjectVector(c) {

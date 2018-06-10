@@ -1,9 +1,12 @@
 var black="#000";
 
 class Entity {
-    constructor(x,y,r,z) {
+    constructor(x,y,r,z,align) {
         this.hitbox=new Circle(x,y,r,z);
         this.alive=true;
+        this.align=align;
+        this.canHit=false;
+        this.canBeHit=false;
     }
     
     update() {}
@@ -15,6 +18,9 @@ class Entity {
     reset() {
         this.alive=false;
     }
+    
+    hit(other) {}
+    getHit(other) {}
     
     warpTo(dest) {
         this.translate(dest.chunk.x*1000+dest.x-this.hitbox.x,dest.chunk.y*1000+dest.y-this.hitbox.y);
@@ -36,8 +42,9 @@ class Entity {
 
 class Player extends Entity {
     constructor(x,y,z) {
-        super(x,y,20,z);
+        super(x,y,20,z,0);
         this.SPEED=5;
+        this.canBeHit=true;
     }
     
     update() {
@@ -64,7 +71,7 @@ class Player extends Entity {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
         }
         if (keys[4].isPressed) {
-            addEntity(new TestEnemy(camera.x-ctx.canvas.width/2+mouse.x,camera.y-ctx.canvas.height/2+mouse.y,this.hitbox.z));
+            addEntity(new BasicShot(this.hitbox.x,this.hitbox.y,getAngle(camera.x-ctx.canvas.width/2+mouse.x-this.hitbox.x,camera.y-ctx.canvas.height/2+mouse.y-this.hitbox.y),this.hitbox.z,0,10,3));
         }
     }
     
@@ -73,8 +80,10 @@ class Player extends Entity {
 
 class TestEnemy extends Entity {
     constructor(x,y,z) {
-        super(x,y,15,z);
+        super(x,y,15,z,1);
         this.shotTimer=60;
+        this.canBeHit=true;
+        this.hp=3;
     }
     
     update() {
@@ -83,11 +92,27 @@ class TestEnemy extends Entity {
             this.shotTimer--;
             if (this.shotTimer<=0) {
                 this.shotTimer=60;
-                addEntity(new TestShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y),this.hitbox.z));
+                addEntity(new BasicShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y),this.hitbox.z,1,5,1));
             }
         }
         for (var i=0; i<walls.length; i++) {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
+        }
+        for (var i=0; i<entities.length; i++) {
+            if (entities[i].canHit&&entities[i].align!=this.align) {
+                if (entities[i].hitbox.intersectsCircle(this.hitbox)) {
+                    this.getHit(entities[i]);
+                    entities[i].hit(this);
+                    if (!this.alive) break;
+                }
+            }
+        }
+    }
+    
+    getHit(other) {
+        this.hp--;
+        if (this.hp<=0) {
+            this.alive=false;
         }
     }
     
@@ -102,28 +127,42 @@ class TestEnemy extends Entity {
     }
 }
 
-class TestShot extends Entity {
-    constructor(x,y,theta,z) {
-        super(x,y,5,z);
-        this.d=new Vector(5*Math.cos(theta),5*Math.sin(theta));
+class BasicShot extends Entity {
+    constructor(x,y,theta,z,align,speed,bounces) {
+        super(x,y,5,z,align);
+        this.d=new Vector(speed*Math.cos(theta),speed*Math.sin(theta));
+        this.numChecks=Math.ceil(speed/5);
+        this.bounces=bounces;
+        this.canHit=true;
     }
     
     update() {
-        this.hitbox.translateVec(this.d);
-        for (var i=0; i<walls.length; i++) {
-            var v=walls[i].circleEjectVector(this.hitbox);
-            if (v) {
-                this.hitbox.translateVec(v);
-                v=v.scale(1);
-                var newX=-v.x*this.d.x-v.y*this.d.y;
-                this.d.y=-v.y*this.d.x+v.x*this.d.y;
-                this.d.x=v.x*newX-v.y*this.d.y;
-                this.d.y=v.y*newX+v.x*this.d.y;
+        for (var j=0; j<this.numChecks; j++) {
+            this.hitbox.translateVec(this.d.mult(1/this.numChecks));
+            for (var i=0; i<walls.length; i++) {
+                var v=walls[i].circleEjectVector(this.hitbox);
+                if (v) {
+                    if (this.bounces==0) {
+                        this.alive=false;
+                    } else {
+                        this.bounces--;
+                        this.hitbox.translateVec(v);
+                        v=v.scale(1);
+                        var newX=-v.x*this.d.x-v.y*this.d.y;
+                        this.d.y=-v.y*this.d.x+v.x*this.d.y;
+                        this.d.x=v.x*newX-v.y*this.d.y;
+                        this.d.y=v.y*newX+v.x*this.d.y;
+                    }
+                }
             }
         }
         if (dist(this.hitbox.x-player.hitbox.x,this.hitbox.y-player.hitbox.y)>2000) {
             this.alive=false;
         }
+    }
+    
+    hit(other) {
+        this.alive=false;
     }
     
     render(ctx,screen) {
