@@ -31,6 +31,9 @@ var mouse={"x":0,"y":0};
 var z=0;
 var warpCounter=0;
 var warpDest=null;
+var checkpoint={"x":100,"y":100,"z":0};
+
+var circleFadeRadius=1;
 
 var chunkLoadQueue=[];
 
@@ -41,7 +44,22 @@ var gameLoop=function() {
 }
 
 var update=function() {
-    if (warpCounter!=0) {
+    if (deathAnimCounter!=0) {
+        deathAnimCounter++;
+        circleFadeRadius=1-Math.abs(deathAnimCounter)/60;
+        if (deathAnimCounter>=100) {
+            clearAll();
+            player.hitbox.x=checkpoint.x;
+            player.hitbox.y=checkpoint.y;
+            player.hitbox.z=checkpoint.z;
+            loadArea(Math.floor(checkpoint.x/1000),Math.floor(checkpoint.y/1000),checkpoint.z);
+            camera.x=player.hitbox.x;
+            camera.y=player.hitbox.y;
+            deathAnimCounter=-100;
+            player.reset();
+        }
+        return;
+    } else if (warpCounter!=0) {
         warpCounter++;
         if (warpCounter==30) {
             screenBox.x=player.hitbox.x-500;
@@ -60,6 +78,7 @@ var update=function() {
             camera.y=player.hitbox.y;
             warpCounter=-30;
         }
+        circleFadeRadius=1-Math.abs(warpCounter)/25;
         return;
     }
     for (var i=0; i<entities.length; i++) {
@@ -68,6 +87,12 @@ var update=function() {
         }
         if (!entities[i].alive) {
             entities.splice(i,1);
+            i--;
+        }
+    }
+    for (var i=0; i<walls.length; i++) {
+        if (!walls[i].alive) {
+            walls.splice(i,1);
             i--;
         }
     }
@@ -110,11 +135,11 @@ var render=function() {
     screenBox.z=z;
     ctx.translate(ctx.canvas.width/2-camera.x,ctx.canvas.height/2-camera.y);
     ctx.fillStyle=black;
-    if (warpCounter!=0) {
+    if (circleFadeRadius!=1) {
         ctx.fillRect(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2,ctx.canvas.width,ctx.canvas.height);
         ctx.save();
         ctx.beginPath();
-        ctx.arc(camera.x,camera.y,Math.max((1-Math.abs(warpCounter)/25)*Math.max(ctx.canvas.width,ctx.canvas.height)/2,1),0,2*Math.PI);
+        ctx.arc(camera.x,camera.y,Math.max(circleFadeRadius*Math.max(ctx.canvas.width,ctx.canvas.height)/2,1),0,2*Math.PI);
         ctx.clip();
     }
     for (var i=0; i<cover.length; i++) {
@@ -127,10 +152,11 @@ var render=function() {
         entities[i].render(ctx,screenBox);
     }
     player.render(ctx,screenBox);
-    if (warpCounter!=0) {
+    if (circleFadeRadius!=1) {
         ctx.restore();
     }
     ctx.translate(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2);
+    player.renderHP(ctx);
 }
 
 var loadInChunk=function(x,y,z,chunk) {
@@ -248,6 +274,15 @@ var purgeObjects=function(rect) {
             i--;
         }
     }
+}
+
+var clearAll=function() {
+    walls=[];
+    cover=[];
+    entities=[];
+    warps=[];
+    terrain=[];
+    chunkLoadQueue=[];
 }
 
 var addEntity=function(entity) {

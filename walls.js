@@ -24,6 +24,7 @@ class CircleWall {
     constructor(x,y,r,z) {
         this.hitbox=new Circle(x,y,r,z);
         this.boundBox=new BoundBox(x-r,y-r,r+r,r+r,z);
+        this.alive=true;
     }
     
     circleEjectVector(c) {
@@ -45,8 +46,10 @@ class CircleWall {
 }
 
 class PolygonWall {
-    constructor(x,y,z) {
+    constructor(x,y,z,fill) {
+        this.alive=true;
         this.walls=[new Segment(x[x.length-1],y[y.length-1],x[0],y[0],z)];
+        this.fillColor=fill;
         var minX=x[x.length-1];
         var maxX=minX;
         var minY=y[y.length-1];
@@ -143,6 +146,10 @@ class PolygonWall {
             ctx.lineTo(this.walls[i].p1.x,this.walls[i].p1.y);
         }
         ctx.stroke();
+        if (this.fillColor) {
+            ctx.fillStyle=this.fillColor;
+            ctx.fill();
+        }
     }
     
     fill(ctx) {
@@ -158,6 +165,7 @@ class PolygonWall {
 
 class Tree {
     constructor(x,y,w,h,seed,z) {
+        this.alive=true;
         var trunkWidth=w*(seed*0.0000002+0.2);
         seed=advanceSeed(seed);
         var cx=x+w/2;
@@ -176,7 +184,9 @@ class Tree {
         seed=advanceSeed(seed);
         trunkX.push(cx+trunkWidth-sampX);
         trunkY.push(y+h-a*sampX*sampX);
-        this.trunk=new PolygonWall(trunkX,trunkY,z);
+        this.trunk=new PolygonWall(trunkX,trunkY,z,"#880");
+        seed=advanceSeed(seed);
+        var leafFill="rgb("+(seed%57)+","+(110+seed%36)+","+(seed%53)+")";
         if (seed%11<7) {
             var cy=y+h/3;
             var thetas=[0.7,2.4];
@@ -198,12 +208,10 @@ class Tree {
                 leavesX.push(Math.cos(thetas[i])*w/2+cx);
                 leavesY.push(Math.sin(thetas[i])*h/3+cy);
             }
-            this.leaves=new PolygonWall(leavesX,leavesY,z);
+            this.leaves=new PolygonWall(leavesX,leavesY,z,leafFill);
         } else {
-            this.leaves=new PolygonWall([cx,x+w,x],[y,y+h*5/6,y+h*5/6],z);
+            this.leaves=new PolygonWall([cx,x+w,x],[y,y+h*5/6,y+h*5/6],z,leafFill);
         }
-        seed=advanceSeed(seed);
-        this.leafFill="rgb("+(seed%57)+","+(110+seed%36)+","+(seed%53)+")";
         this.boundBox=new BoundBox(Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),Math.max(this.leaves.boundBox.x+this.leaves.boundBox.w,this.trunk.boundBox.x+this.trunk.boundBox.w)-Math.min(this.leaves.boundBox.x,this.trunk.boundBox.x),Math.max(this.leaves.boundBox.y+this.leaves.boundBox.h,this.trunk.boundBox.y+this.trunk.boundBox.h)-Math.min(this.leaves.boundBox.y,this.trunk.boundBox.y),z);
     }
     
@@ -228,20 +236,14 @@ class Tree {
     }
     
     render(ctx,screen) {
-        ctx.strokeStyle=black;
-        if (screen.intersectsRect(this.trunk.boundBox)) {
-            ctx.fillStyle="#880";
-            this.trunk.fill(ctx);
-        }
-        if (screen.intersectsRect(this.leaves.boundBox)) {
-            ctx.fillStyle=this.leafFill;
-            this.leaves.fill(ctx);
-        }
+        this.trunk.render(ctx,screen);
+        this.leaves.render(ctx,screen);
     }
 }
 
 class Cabin {
     constructor(x,y,w,h,z) {
+        this.alive=true;
         var roofHeight=w/4;
         this.boundary=new PolygonWall([x,x+w/2,x+w,x+w,x],[y+roofHeight,y,y+roofHeight,y+h,y+h],z);
         this.boundBox=this.boundary.boundBox;

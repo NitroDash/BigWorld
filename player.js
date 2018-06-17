@@ -40,11 +40,16 @@ class Entity {
     }
 }
 
+var deathAnimCounter=0;
+
 class Player extends Entity {
     constructor(x,y,z) {
         super(x,y,20,z,0);
         this.SPEED=5;
         this.canBeHit=true;
+        this.shotCooldown=0;
+        this.maxhp=6;
+        this.hp=this.maxhp;
     }
     
     update() {
@@ -70,60 +75,43 @@ class Player extends Entity {
         for (var i=0; i<walls.length; i++) {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
         }
-        if (keys[4].isPressed) {
+        if (keys[4].isDown&&this.shotCooldown==0) {
+            this.shotCooldown=20;
             addEntity(new BasicShot(this.hitbox.x,this.hitbox.y,getAngle(camera.x-ctx.canvas.width/2+mouse.x-this.hitbox.x,camera.y-ctx.canvas.height/2+mouse.y-this.hitbox.y),this.hitbox.z,0,10,3));
-        }
-    }
-    
-    reset() {}
-}
-
-class TestEnemy extends Entity {
-    constructor(x,y,z) {
-        super(x,y,15,z,1);
-        this.shotTimer=60;
-        this.canBeHit=true;
-        this.hp=3;
-    }
-    
-    update() {
-        if (dist(this.hitbox.x-player.hitbox.x,this.hitbox.y-player.hitbox.y)<500) {
-            this.hitbox.translateVec((new Vector(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y)).scale(3));
-            this.shotTimer--;
-            if (this.shotTimer<=0) {
-                this.shotTimer=60;
-                addEntity(new BasicShot(this.hitbox.x,this.hitbox.y,getAngle(player.hitbox.x-this.hitbox.x,player.hitbox.y-this.hitbox.y),this.hitbox.z,1,5,1));
-            }
-        }
-        for (var i=0; i<walls.length; i++) {
-            this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
+        } else if (this.shotCooldown>0) {
+            this.shotCooldown--;
         }
         for (var i=0; i<entities.length; i++) {
             if (entities[i].canHit&&entities[i].align!=this.align) {
                 if (entities[i].hitbox.intersectsCircle(this.hitbox)) {
                     this.getHit(entities[i]);
                     entities[i].hit(this);
-                    if (!this.alive) break;
                 }
             }
         }
     }
     
+    reset() {
+        this.hp=this.maxhp;
+        this.alive=true;
+    }
+    
     getHit(other) {
         this.hp--;
         if (this.hp<=0) {
+            this.hp=0;
             this.alive=false;
+            deathAnimCounter=1;
         }
     }
     
-    render(ctx,screen) {
-        if (!screen.intersectsCircle(this.hitbox)){return;}
-        ctx.fillStyle="#f00";
+    renderHP(ctx) {
+        ctx.fillStyle="#888";
         ctx.strokeStyle=black;
-        ctx.beginPath();
-        ctx.arc(this.hitbox.x,this.hitbox.y,this.hitbox.r,0,Math.PI*2);
-        ctx.fill();
-        ctx.stroke();
+        ctx.fillRect(5,5,this.maxhp*20,10);
+        ctx.fillStyle="#0f0";
+        ctx.fillRect(5,5,this.hp*20,10);
+        ctx.strokeRect(5,5,this.maxhp*20,10);
     }
 }
 

@@ -429,7 +429,11 @@ class Chunk {
             for (var i=0; i<obj.enemies.length; i++) {
                 switch(obj.enemies[i].type) {
                     case "test":
-                        this.enemies.push(new TestEnemy(obj.enemies[i].x,obj.enemies[i].y,z));
+                        this.enemies.push(new BasicEnemy(obj.enemies[i].x,obj.enemies[i].y,z));
+                        break;
+                    case "shield":
+                        this.enemies.push(new ShieldEnemy(obj.enemies[i].x,obj.enemies[i].y,z));
+                        this.walls.push(this.enemies[this.enemies.length-1].shield);
                         break;
                 }
             }
