@@ -458,6 +458,11 @@ class Chunk {
                 }
             }
         }
+        if (obj.npcs) {
+            for (var i=0; i<obj.npcs.length; i++) {
+                loadNPC(obj.npcs[i]);
+            }
+        }
     }
 }
 

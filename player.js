@@ -75,7 +75,17 @@ class Player extends Entity {
         for (var i=0; i<walls.length; i++) {
             this.hitbox.translateVec(walls[i].circleEjectVector(this.hitbox));
         }
-        if (keys[4].isDown&&this.shotCooldown==0) {
+        var talked=false;
+        if (keys[4].isPressed) {
+            for (var i=0; i<npcs.length; i++) {
+                if (npcs[i].hitbox.intersectsCircle(this.hitbox)) {
+                    npcs[i].speak();
+                    talked=true;
+                    break;
+                }
+            }
+        }
+        if (!talked&&keys[4].isDown&&this.shotCooldown==0) {
             this.shotCooldown=20;
             addEntity(new BasicShot(this.hitbox.x,this.hitbox.y,getAngle(camera.x-ctx.canvas.width/2+mouse.x-this.hitbox.x,camera.y-ctx.canvas.height/2+mouse.y-this.hitbox.y),this.hitbox.z,0,10,3));
         } else if (this.shotCooldown>0) {

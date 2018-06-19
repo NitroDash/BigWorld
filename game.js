@@ -16,6 +16,9 @@ var entities=[];
 var cover=[];
 var warps=[];
 var terrain=[];
+var npcs=[];
+
+var speechFont="20px sans-serif";
 
 var mouse={"x":0,"y":0};
 
@@ -36,9 +39,13 @@ var checkpoint={"x":100,"y":100,"z":0};
 var circleFadeRadius=1;
 
 var chunkLoadQueue=[];
+var npcLoadQueue=[];
 
 var gameLoop=function() {
     update();
+    for (var i=0; i<keys.length; i++) {
+        keys[i].isPressed=false;
+    }
     render();
     window.requestAnimationFrame(gameLoop);
 }
@@ -80,6 +87,9 @@ var update=function() {
         }
         circleFadeRadius=1-Math.abs(warpCounter)/25;
         return;
+    } else if (cutscene.active) {
+        cutscene.update();
+        return;
     }
     for (var i=0; i<entities.length; i++) {
         if (entities[i].hitbox.z==z) {
@@ -96,6 +106,9 @@ var update=function() {
             i--;
         }
     }
+    for (var i=0; i<npcs.length; i++) {
+        npcs[i].update();
+    }
     player.update();
     for (var i=0; i<warps.length; i++) {
         if (warps[i].intersectsCircle(player.hitbox)) {
@@ -107,9 +120,6 @@ var update=function() {
     camera.x=player.hitbox.x;
     camera.y=player.hitbox.y;
     checkForChunkLoads();
-    for (var i=0; i<keys.length; i++) {
-        keys[i].isPressed=false;
-    }
 }
 
 var defaultTerrain=new ChunkTerrain("land");
@@ -151,12 +161,47 @@ var render=function() {
     for (var i=0; i<entities.length; i++) {
         entities[i].render(ctx,screenBox);
     }
+    for (var i=0; i<npcs.length; i++) {
+        npcs[i].render(ctx,screenBox);
+    }
     player.render(ctx,screenBox);
+    cutscene.render(ctx);
     if (circleFadeRadius!=1) {
         ctx.restore();
     }
     ctx.translate(camera.x-ctx.canvas.width/2,camera.y-ctx.canvas.height/2);
     player.renderHP(ctx);
+}
+
+var drawSpeechBox=function(text,x,y) {
+    ctx.font=speechFont;
+    var w=0;
+    for (var i=0; i<text.length; i++) {
+        var newW=ctx.measureText(text[i]).width;
+        w=Math.max(newW,w);
+    }
+    w+=20;
+    var rectX=x-w/2;
+    if (rectX<camera.x-ctx.canvas.width/2) rectX=camera.x-ctx.canvas.width/2;
+    if (rectX>camera.x+ctx.canvas.width/2-w) rectX=camera.x+ctx.canvas.width/2-w;
+    var h=text.length*23+6;
+    ctx.fillStyle="#ddd";
+    ctx.strokeStyle=black;
+    ctx.beginPath();
+    ctx.moveTo(rectX,y-h-20);
+    ctx.lineTo(rectX+w,y-h-20);
+    ctx.lineTo(rectX+w,y-20);
+    ctx.lineTo(x+10,y-20);
+    ctx.lineTo(x,y);
+    ctx.lineTo(x-10,y-20);
+    ctx.lineTo(rectX,y-20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle=black;
+    for (var i=0; i<text.length; i++) {
+        ctx.fillText(text[i],rectX+10,y-h+23*i);
+    }
 }
 
 var loadInChunk=function(x,y,z,chunk) {
@@ -192,6 +237,20 @@ var loadInChunk=function(x,y,z,chunk) {
     }
 }
 
+var loadInNPC=function(name, npc) {
+    for (var i=npcLoadQueue.length-1; i>=0; i--) {
+        if (npcLoadQueue[i].name===name) {
+            if (npcLoadQueue[i].status==0) {
+                npcLoadQueue[i].status=1;
+                break;
+            } else {
+                return;
+            }
+        }
+    }
+    npcs.push(npc);
+}
+
 var checkForChunkLoads=function() {
     var x=Math.floor(player.hitbox.x/1000);
     var y=Math.floor(player.hitbox.y/1000);
@@ -215,10 +274,26 @@ class ChunkLoad {
     }
 }
 
+class NPCLoad {
+    constructor(name) {
+        this.name=name;
+        this.status=0;
+    }
+}
+
 var isLoaded=function(x,y,z) {
     for (var i=0; i<chunkLoadQueue.length; i++) {
         if (chunkLoadQueue[i].matches(x,y,z)) {
             return chunkLoadQueue[i].status==1?true:false;
+        }
+    }
+    return false;
+}
+
+var isLoadedNPC=function(name,notLoadedYetResponse) {
+    for (var i=0; i<npcLoadQueue.length; i++) {
+        if (npcLoadQueue[i].name===name) {
+            return npcLoadQueue[i].status==1?true:notLoadedYetResponse;
         }
     }
     return false;
@@ -240,6 +315,12 @@ var addToLoadQueue=function(x,y,z) {
             }
         }
     }
+    return true;
+}
+
+var addToLoadQueueNPC=function(name) {
+    if (isLoadedNPC(name,true)) return false;
+    npcLoadQueue.push(new NPCLoad(name));
     return true;
 }
 
@@ -274,6 +355,13 @@ var purgeObjects=function(rect) {
             i--;
         }
     }
+    for (var i=0; i<npcs.length; i++) {
+        if (rect.intersectsCircle(npcs[i])) {
+            removeNPC(npcs[i].name);
+            npcs.splice(i,1);
+            i--;
+        }
+    }
 }
 
 var clearAll=function() {
@@ -283,6 +371,17 @@ var clearAll=function() {
     warps=[];
     terrain=[];
     chunkLoadQueue=[];
+    npcs=[];
+    npcLoadQueue=[];
+}
+
+var removeNPC=function(name) {
+    for (var i=0; i<npcLoadQueue.length; i++) {
+        if (npcLoadQueue[i].name===name) {
+            npcLoadQueue.splice(i,1);
+            return;
+        }
+    }
 }
 
 var addEntity=function(entity) {
