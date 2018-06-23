@@ -41,15 +41,24 @@ class Dialog extends CutscenePart {
     
     update() {
         if (keys[4].isPressed) {
-            this.index++;
-            if (this.index>=this.text.dialog.length) {
-                this.done=true;
-            }
+            do {
+                this.index++;
+                if (this.index>=this.text.length) {
+                    this.done=true;
+                    break;
+                } else {
+                    switch(this.text[this.index].type) {
+                        case "plotAdvance":
+                            plotCounters[this.text[this.index].counter]=this.text[this.index].value;
+                            break;
+                    }
+                }
+            } while (!this.text[this.index][0]);
         }
     }
     
     render(ctx) {
-        drawSpeechBox(this.text.dialog[this.index],this.x,this.y);
+        drawSpeechBox(this.text[this.index],this.x,this.y);
     }
 }
 

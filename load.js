@@ -86,7 +86,15 @@ function loadChunk(x,y,z) {
 function loadNPC(name) {
     if (addToLoadQueueNPC(name)) {
         loadJSON("npcs/"+name+".json",function(resp) {
-            loadInNPC(name,makeNPC(resp));
+            loadInNPC(name,makeNPC(resp,name));
+        })
+    }
+}
+
+function loadTravelNPC(name,id) {
+    if (addToLoadQueueNPC(name)) {
+        loadJSON("npcs/"+name+".json",function(resp) {
+            loadInNPC(name,makeTravelNPC(resp,name,id));
         })
     }
 }

@@ -1,0 +1,7 @@
+{
+    "name":"Test",
+    "pos":{"x":-500,"y":2200,"z":1},
+    "dialog":[
+        {"text":[["Get out of my house!"]]}
+    ]
+}

@@ -41,6 +41,9 @@ var circleFadeRadius=1;
 var chunkLoadQueue=[];
 var npcLoadQueue=[];
 
+var plotCounters=[0];
+var time=0;
+
 var gameLoop=function() {
     update();
     for (var i=0; i<keys.length; i++) {
@@ -91,6 +94,7 @@ var update=function() {
         cutscene.update();
         return;
     }
+    time++;
     for (var i=0; i<entities.length; i++) {
         if (entities[i].hitbox.z==z) {
             entities[i].update();
@@ -108,6 +112,11 @@ var update=function() {
     }
     for (var i=0; i<npcs.length; i++) {
         npcs[i].update();
+        if (!npcs[i].alive) {
+            removeNPC(npcs[i].realName);
+            npcs.splice(i,1);
+            i--;
+        }
     }
     player.update();
     for (var i=0; i<warps.length; i++) {
@@ -120,6 +129,7 @@ var update=function() {
     camera.x=player.hitbox.x;
     camera.y=player.hitbox.y;
     checkForChunkLoads();
+    checkForNPCLoads();
 }
 
 var defaultTerrain=new ChunkTerrain("land");
@@ -356,8 +366,8 @@ var purgeObjects=function(rect) {
         }
     }
     for (var i=0; i<npcs.length; i++) {
-        if (rect.intersectsCircle(npcs[i])) {
-            removeNPC(npcs[i].name);
+        if (rect.intersectsCircle(npcs[i].hitbox)) {
+            removeNPC(npcs[i].realName);
             npcs.splice(i,1);
             i--;
         }

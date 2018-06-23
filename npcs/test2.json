@@ -1,0 +1,11 @@
+{
+    "name":"Test",
+    "pos":{"x":300,"y":700,"z":0},
+    "dialog": [
+        {
+            "plot":{"counter":0,"value":1},
+            "text":[["Seems you've talked to me before."]]
+        },
+        {"text":[["Hey, this is the first time you've talked to me!"],["Nice!"],{"type":"plotAdvance","counter":0,"value":1}]}
+    ]
+}

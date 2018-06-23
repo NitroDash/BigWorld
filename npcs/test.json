@@ -1,15 +1,20 @@
 {
     "name":"Test",
     "pos":{"x":500,"y":-1500,"z":0},
-    "dialog":{
-        "type":"basic",
-        "dialog":[
-            ["To be, or not to be, that is the question:"],
-            ["Whether 'tis nobler in the mind to suffer","The slings and arrows of outrageous fortune,","Or to take arms against a sea of troubles","And by opposing end them. To die—to sleep,","No more; and by a sleep to say we end","The heart-ache and the thousand natural shocks","That flesh is heir to: 'tis a consummation","Devoutly to be wish'd. To die, to sleep;","To sleep, perchance to dream—ay, there's the rub:","For in that sleep of death what dreams may come,","When we have shuffled off this mortal coil,","Must give us pause—there's the respect","That makes calamity of so long life."],
-            ["..."],
-            ["I forget what comes next."],
-            ["But I do know that the textbox engine works brilliantly well for really really long textboxes such as this one. Even if it goes off the screen, you can see most of it. This will show what happens if a box is too large for the screen."],
-            ["Of course, no self-respecting game designer would make such an outlandish textbox."]
-        ]
-    }
+    "dialog":[
+        {
+            "plot":{"counter":0,"value":1},
+            "text":[["Hey, you've talked to my buddy two chunks down!"],["Nice!"]]
+        },
+        {
+            "text":[
+                ["To be, or not to be, that is the question:"],
+                ["Whether 'tis nobler in the mind to suffer","The slings and arrows of outrageous fortune,","Or to take arms against a sea of troubles","And by opposing end them. To die—to sleep,","No more; and by a sleep to say we end","The heart-ache and the thousand natural shocks","That flesh is heir to: 'tis a consummation","Devoutly to be wish'd. To die, to sleep;","To sleep, perchance to dream—ay, there's the rub:","For in that sleep of death what dreams may come,","When we have shuffled off this mortal coil,","Must give us pause—there's the respect","That makes calamity of so long life."],
+                ["..."],
+                ["I forget what comes next."],
+                ["But I do know that the textbox engine works brilliantly well for really really long textboxes such as this one. Even if it goes off the screen, you can see most of it. This will show what happens if a box is too large for the screen."],
+                ["Of course, no self-respecting game designer would make such an outlandish textbox."]
+            ]
+        }
+    ]
 }
