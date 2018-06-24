@@ -407,6 +407,9 @@ class Chunk {
                         this.walls.push(c);
                         this.warps.push(c.getDoorWarp(obj.walls[i].dest));
                         break;
+                    case "linestring":
+                        this.walls.push(new LinestringWall(obj.walls[i].x,obj.walls[i].y,z));
+                        break;
                 }
             }
         }

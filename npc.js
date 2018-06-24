@@ -22,7 +22,11 @@ class RadiusWander extends Path {
         this.d.x=radius*Math.cos(theta)+this.x-this.owner.hitbox.x;
         this.d.y=radius*Math.sin(theta)+this.y-this.owner.hitbox.y;
         this.counter=Math.floor(this.d.mag()/3);
-        this.d=this.d.mult(1/this.counter);
+        if (this.counter==0) {
+            this.d=this.d.mult(0);
+        } else {
+            this.d=this.d.mult(1/this.counter);
+        }
     }
     
     translate(x,y) {
@@ -71,7 +75,8 @@ class TravelPath extends Path {
 }
 
 var makePath=function(path,owner) {
-    return new RadiusWander(x,y,150,owner)
+    if (path===1) return null;
+    return new RadiusWander(x,y,150,owner);
 }
 
 class NPC extends Entity {
@@ -102,7 +107,10 @@ class NPC extends Entity {
                 }
             }
             if (this.dialog[i].time) {
-                //Decide on syntax later
+                var t=time%this.dialog[i].time.mod;
+                if (t<this.dialog[i].time.start||t>this.dialog[i].time.end) {
+                    works=false;
+                }
             }
             if (works) return this.dialog[i].text;
         }
@@ -116,6 +124,7 @@ var makeNPC=function(resp,name) {
 
 class TravelNPC extends NPC {
     constructor(path,pos,data,realName) {
+        data.path=1;
         super(pos.x,pos.y,pos.z,data,realName);
         this.path=new TravelPath(path,this);
     }

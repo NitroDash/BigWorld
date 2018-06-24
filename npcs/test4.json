@@ -1,6 +1,7 @@
 {
     "name":"Another Test",
     "dialog":[
-        {"text":[["Hi, I'm walking."]]}
+        {"time":{"start":0,"end":600,"mod":1200},"text":[["Hi, I'm walking one way."]]},
+        {"text":[["Hi, I'm walking the other way."]]}
     ]
 }

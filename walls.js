@@ -163,6 +163,25 @@ class PolygonWall {
     }
 }
 
+class LinestringWall extends PolygonWall {
+    constructor(x,y,z) {
+        super(x,y,z,null);
+        this.walls.splice(0,1);
+    }
+    
+    render(ctx,screen) {
+        if (!screen.intersectsRect(this.boundBox)) {return;}
+        ctx.strokeStyle=black;
+        ctx.beginPath();
+        ctx.moveTo(this.walls[0].p1.x,this.walls[0].p1.y);
+        for (var i=0; i<this.walls.length; i++) {
+            ctx.lineTo(this.walls[i].p1.x,this.walls[i].p1.y);
+        }
+        ctx.lineTo(this.walls[this.walls.length-1].p2.x,this.walls[this.walls.length-1].p2.y);
+        ctx.stroke();
+    }
+}
+
 class Tree {
     constructor(x,y,w,h,seed,z) {
         this.alive=true;
